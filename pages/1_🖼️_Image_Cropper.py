@@ -1,31 +1,24 @@
-# The library you have to use
 import numpy as np
-
-# Some extra libraries to build the webapp and deal with images and files
 import streamlit as st
 import io
 from PIL import Image
 
-
 # ----- Page configs -----
 st.set_page_config(
-    page_title="<Your Name> Portfolio",
+    page_title="Image Cropper Portfolio",
     page_icon="📊",
 )
-
 
 # ----- Left menu -----
 with st.sidebar:
     st.image("eae_img.png", width=200)
-    st.write("Interactive Project to open, crop, display and save images using NumPy, PIL and Matplotlib.")
-
+    st.write("Interactive Project to open, crop, display and save images using NumPy, PIL, and Matplotlib.")
 
 # ----- Title of the page -----
 st.title("🖼️ Image Cropper")
 st.divider()
 
-
-# ----- Getting the image from the user or using a default one if the user didn't upload any, we get the image as a numpy array called img_arr -----
+# ----- Getting the image from the user or using a default one -----
 is_example = False
 img = st.file_uploader("Upload an image:", type=["png", "jpg", "jpeg"])
 
@@ -41,51 +34,30 @@ else:
 st.image(img_arr, caption="Original Image" if not is_example else "Original example image", use_column_width=True)
 st.write("#")
 
-
-# TODO: Ex. 1.1: Get the minimum and maximum values for the vertical and horizontal ranges, so the size of the img_arr array -----
-
-min_height = 0 
-max_height = None   # TODO: Replace None with the maximum height of the image using np.shape() function
-
+# ----- Get min and max values for cropping -----
+min_height = 0
+max_height = img_arr.shape[0]  # Get height
 min_width = 0
-max_width = None    # TODO: Replace None with the maximum width of the image using np.shape() function   
+max_width = img_arr.shape[1]   # Get width
 
+# ----- Creating the sliders for user input -----
+cols1 = st.columns([4, 1, 4])
+crop_min_h, crop_max_h = cols1[0].slider("Crop Vertical Range", min_height, max_height, (int(max_height*0.1), int(max_height*0.9)))
+crop_min_w, crop_max_w = cols1[2].slider("Crop Horizontal Range", min_width, max_width, (int(max_width*0.1), int(max_width*0.9)))
 
-# ----- Creating the sliders to receive the user input with the dimensions to crop the image ----- 
-if type(max_height) == int and type(max_width) == int:
-    
-    cols1 = st.columns([4, 1, 4])
+st.write("## Cropped Image")
 
-    # this returns a tuple like (100, 300), for the veritcal range to crop
-    crop_min_h, crop_max_h = cols1[0].slider("Crop Vertical Range", min_height, max_height, (int(max_height*0.1), int(max_height*0.9)))   
-    # this returns a tuple like (100, 300), for the horizontal range to crop
-    crop_min_w, crop_max_w = cols1[2].slider("Crop Horizontal Range", min_width, max_width, (int(max_width*0.1), int(max_width*0.9)))    
+# ----- Cropping the image -----
+crop_arr = img_arr[crop_min_h:crop_max_h, crop_min_w:crop_max_w]
 
+# ----- Displaying and allowing download of the cropped image -----
+st.image(crop_arr, caption="Cropped Image", use_column_width=True)
 
-    st.write("## Cropped Image")
+buf = io.BytesIO()
+Image.fromarray(crop_arr).save(buf, format="PNG")
+cropped_img_bytes = buf.getvalue()
 
-else:
-    st.subheader("⚠️ You still need to develop the Ex 1.1.")
+cols2 = st.columns([4, 1, 4])
+file_name = cols2[0].text_input("Choose a File Name:", "cropped_image") + ".png"
 
-
-# TODO: Ex. 1.3: Crop the image array img_arr using the crop_min_h, crop_max_h, crop_min_w and crop_max_w values -----
-
-crop_arr = None  # TODO: Generate the crop array into a new variable, use NumPy array slicing
-
-
-# ----- Displaying the cropped image and creating a download button to download the image -----
-
-if type(crop_arr) == np.ndarray:
-    st.image(crop_arr, caption="Cropped Image", use_column_width=True)
-
-    buf = io.BytesIO()
-    Image.fromarray(crop_arr).save(buf, format="PNG")
-    cropped_img_bytes = buf.getvalue()
-
-    cols2 = st.columns([4, 1, 4])
-    file_name = cols2[0].text_input("Chose a File Name:", "cropped_image") + ".png"
-
-    st.download_button(f"Download the image `{file_name}`", cropped_img_bytes, file_name=file_name)
-
-else:
-    st.subheader("⚠️ You still need to develop the Ex 1.3.")
+st.download_button(f"Download the image `{file_name}`", cropped_img_bytes, file_name=file_name)
